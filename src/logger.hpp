@@ -21,6 +21,12 @@
 #define LOG_PIPES_COUNT         5
 #endif
 
+#if defined(_DEBUG)
+#define LOG_DEFAULT_MIN_LEVEL   Log::Level::Debug
+#else
+#define LOG_DEFAULT_MIN_LEVEL   Log::Level::Info
+#endif
+
 class Log {
 public:
     enum class Level {
@@ -34,8 +40,8 @@ public:
     ~Log();
 
     void    add         (std::ostream& os);
-    void    setMin      (Level value = Level::Debug)    { this->minLevel = value; }
-    void    setBufferized(bool isBufferized = true)     { this->_isBufferized = isBufferized; }
+    void    setMin      (Level value = LOG_DEFAULT_MIN_LEVEL)   { if(value >= LOG_DEFAULT_MIN_LEVEL) this->minLevel = value; }
+    void    setBufferized(bool isBufferized = true)             { this->_isBufferized = isBufferized; }
     void    addMessage  (const Level level, const char* function, const size_t line, const char* message, ...);
     void    flush       ();
 
@@ -61,7 +67,7 @@ private:
 // ============================================================================
 
 Log::Log()
-    : minLevel(Level::Debug), startIndex(0), endIndex(0), count(0),
+    : minLevel(LOG_DEFAULT_MIN_LEVEL), startIndex(0), endIndex(0), count(0),
     _isBufferized(true), pipesCount(0)
 {   }
 
