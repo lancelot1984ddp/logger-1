@@ -46,9 +46,10 @@ public:
     void    flush       ();
 
 private:
-    friend Log& logger();
+    friend Log& logger  ();
 
     const char* getLevelString(const Level value);
+    void    performPushMessage(const size_t printedSize);
 
     Level           minLevel;
 
@@ -95,6 +96,38 @@ void Log::addMessage(const Level level, const char* function, const size_t line,
     printedSize += vsnprintf(buffer[endIndex] + printedSize, LOG_MESSAGE_SIZE - printedSize, message, args);
     va_end(args);
 
+    performPushMessage(printedSize);
+}
+
+void Log::flush() {
+    while(this->count) {
+        for(size_t i = 0; i < this->pipesCount; ++i) {
+            (*this->pipes[i]) << buffer[startIndex];
+        }
+        startIndex++;
+        if(startIndex >= LOG_MESSAGES_BUFFER) {
+            startIndex = 0;
+        }
+        this->count--;
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+const char* Log::getLevelString(const Level value) {
+    switch(value) {
+    case Level::Debug:
+        return "Dbg ";
+    case Level::Info:
+        return "Info";
+    case Level::Warning:
+        return "Warn";
+    case Level::Error:
+        return "Err ";
+    }
+}
+
+void Log::performPushMessage(const size_t printedSize) {
     if(printedSize <= LOG_MESSAGE_SIZE - 3) {
         buffer[endIndex][printedSize + 0] = '\r';
         buffer[endIndex][printedSize + 1] = '\n';
@@ -120,33 +153,7 @@ void Log::addMessage(const Level level, const char* function, const size_t line,
     }
 }
 
-const char* Log::getLevelString(const Level value) {
-    switch(value) {
-    case Level::Debug:
-        return "Dbg ";
-    case Level::Info:
-        return "Info";
-    case Level::Warning:
-        return "Warn";
-    case Level::Error:
-        return "Err ";
-    }
-}
-
-void Log::flush() {
-    while(this->count) {
-        for(size_t i = 0; i < this->pipesCount; ++i) {
-            (*this->pipes[i]) << buffer[startIndex];
-        }
-        startIndex++;
-        if(startIndex >= LOG_MESSAGES_BUFFER) {
-            startIndex = 0;
-        }
-        this->count--;
-    }
-}
-
 Log& logger() {
-    static Log __ace_logger;
-    return __ace_logger;
+    static Log __emdc_logger;
+    return __emdc_logger;
 }
