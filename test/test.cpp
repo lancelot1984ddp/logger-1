@@ -9,7 +9,7 @@ int main() {
     logger().add(std::cerr);
     logger().add(std::clog);
 
-    const char* errorMessage = "Some error";
+    const char* errorMessage = "Some long long error from main function";
 
     logger().log(Log::Level::Debug, "Some debug message #%d", 10);
     logger().log(Log::Level::Info, "Some info with %.3f", 245.2835);

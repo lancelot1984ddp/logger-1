@@ -82,22 +82,28 @@ void Log::add(std::ostream& os) {
 }
 
 void Log::addMessage(const Level level, const char* function, const size_t line, const char* message, ...) {
-    static char messageBuffer[LOG_MESSAGE_SIZE - 10];
-    static char lineBuffer[LOG_MESSAGE_SIZE];
-
     if(level < minLevel) {
         return;
     }
 
-    memset(messageBuffer, 0, LOG_MESSAGE_SIZE - 10);
     memset(buffer[endIndex], 0, LOG_MESSAGE_SIZE);
+
+    size_t printedSize = snprintf(buffer[endIndex], LOG_MESSAGE_SIZE, "[%s|%s:%llu]:", getLevelString(level), function, line);
 
     va_list args;
     va_start(args, message);
-    vsnprintf(messageBuffer, LOG_MESSAGE_SIZE - 10, message, args);
+    printedSize += vsnprintf(buffer[endIndex] + printedSize, LOG_MESSAGE_SIZE - printedSize, message, args);
     va_end(args);
 
-    size_t printedSize = snprintf(buffer[endIndex], LOG_MESSAGE_SIZE, "[%s|%s:%llu]:%s\r\n", getLevelString(level), function, line, messageBuffer);
+    if(printedSize <= LOG_MESSAGE_SIZE - 3) {
+        buffer[endIndex][printedSize + 0] = '\r';
+        buffer[endIndex][printedSize + 1] = '\n';
+        buffer[endIndex][printedSize + 2] = '\0';
+    } else {
+        buffer[endIndex][LOG_MESSAGE_SIZE - 3] = '\r';
+        buffer[endIndex][LOG_MESSAGE_SIZE - 2] = '\n';
+        buffer[endIndex][LOG_MESSAGE_SIZE - 1] = '\0';
+    }
 
     endIndex++;
     if(endIndex >= LOG_MESSAGES_BUFFER) {
